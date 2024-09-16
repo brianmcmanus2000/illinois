@@ -10,3 +10,4 @@ for sum in C:
 print(C)
 print(len(distinct_sums))
 #print("Number of distinct interval sums:", count_distinct_interval_sums(A))
+
