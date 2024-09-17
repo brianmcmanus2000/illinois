@@ -1,0 +1,18 @@
+list of links:
+P1 
+https://algo.monster/liteproblems/1477
+https://algo.monster/liteproblems/115
+https://www.coursehero.com/file/114805935/hw6-solpdf/
+https://www.geeksforgeeks.org/count-distinct-occurrences-as-a-subsequence/
+
+P2
+https://github.com/AnandKhinvasara/Dynamic-Programming-Sums/blob/master/Sums/ferry.cpp
+
+
+P3
+https://www.geeksforgeeks.org/coin-change-problem-with-limited-coins/
+https://walkccc.me/LeetCode/problems/322/#__tabbed_1_3
+https://walkccc.me/LeetCode/problems/322/
+https://www.geeksforgeeks.org/coin-change-dp-7/
+https://algorithmist.com/wiki/Coin_change#Recursive_Formulation
+https://www.khoury.northeastern.edu/home/jaa/CSG713.04F/Information/Handouts/dyn_prog.pdf
