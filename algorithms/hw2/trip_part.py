@@ -16,6 +16,7 @@ def subsetSum(S,n,a,b,c,lookup):
             C = subsetSum(S, n-1, a, b, c-S[n], lookup)
         lookup[key] = A or B or C
         #print(lookup)
+    print(lookup)
     return lookup[key]
 
 def partition(S):
@@ -26,7 +27,7 @@ def partition(S):
     return (total %3) == 0 and subsetSum(S,len(S)-1,total//3,total//3,total//3,lookup)
     
 
-S = [7, 3, 2, 1, 5, 4, 10]
+S = [7, 3, 2, 1, 5, 4, 8]
 if partition(S):
     print("set can be partitioned")
 else:
