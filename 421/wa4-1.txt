@@ -1,0 +1,38 @@
+[[ if x>2 then 3 else x + 3]] K 
+
+step 1
+=> [[x > 2]] (FN a -> IF a THEN [[3]] _k ELSE [[x + 3]] _k).
+step 2
+     => [[2]] (FN a -> [[x]] (FN b -> (FN a -> IF a THEN [[3]] _k ELSE [[x + 3]] _k)(b > a))).
+step 3
+           => (FN a -> [[x]] (FN b -> (FN a -> IF a THEN [[3]] _k ELSE [[x + 3]] _k)(b > a))) 2.
+step 4
+           => (FN a -> (FN b -> (FN a -> IF a THEN [[3]] _k ELSE [[x + 3]] _k)(b > a)) x) 2.
+step 5
+           => (FN a -> (FN b -> (FN a -> IF a THEN _k 3 ELSE [[x + 3]] _k)(b > a)) x) 2.
+step 6
+           => (FN a -> (FN b -> (FN a -> IF a THEN _k 3 ELSE [[3]] (FN a -> [[x]] (FN b -> _k(b + a))))(b > a)) x) 2.
+step 7
+           => (FN a -> (FN b -> (FN a -> IF a THEN _k 3 ELSE (FN a -> [[x]] (FN b -> _k(b + a))) 3)(b > a)) x) 2.
+step 8
+           => (FN a -> (FN b -> (FN a -> IF a THEN _k 3 ELSE (FN a -> (FN b -> _k(b + a)) x) 3)(b > a)) x) 2.
+
+
+[[ let plus_x = fun y -> x + y in plus_x x]] _k
+
+step 1
+=>[[fun y -> x + y]] (FN plus_x -> [[plus_x x]] _k).
+step 2
+=>(FN plus_x -> [[plus_x x]] _k) (FUN y _k -> [[x + y]] _k).
+step 3
+=>(FN plus_x -> [[x]] (FN a -> [[plus_x]] (FN b -> (b a _k)))) (FUN y _k -> [[x + y]] _k).
+step 4
+=>(FN plus_x -> [[x]] (FN a -> [[plus_x]] (FN b -> (b a _k)))) (FUN y _k -> [[y]] (FN a -> [[x]] (FN b -> _k(b + a)))).
+step 5
+=>(FN plus_x -> (FN a -> [[plus_x]] (FN b -> (b a _k))) x) (FUN y _k -> [[y]] (FN a -> [[x]] (FN b -> _k(b + a)))).
+step 6
+=>(FN plus_x -> (FN a -> [[plus_x]] (FN b -> (b a _k))) x) (FUN y _k -> (FN a -> [[x]] (FN b -> _k(b + a))) y).
+step 7
+=>(FN plus_x -> (FN a -> [[plus_x]] (FN b -> (b a _k))) x) (FUN y _k -> (FN a -> (FN b -> _k(b + a)) x) y).
+step 8
+=>(FN plus_x -> (FN a -> (FN b -> (b a _k)) plus_x) x) (FUN y _k -> (FN a -> (FN b -> _k(b + a)) x) y).
