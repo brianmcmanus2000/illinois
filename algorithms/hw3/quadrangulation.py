@@ -29,7 +29,7 @@ class GFG:
                 if j < i + 3:
                     table[i][j] = -1
                 else:
-                    table[i][j] = float('-inf')
+                    table[i][j] = 0
                     for k in range(i + 1, j, 2):
                         for l in range(k + 1, j, 2):
                             quad_area = GFG.area(points, i, k, l, j)
@@ -70,5 +70,6 @@ class GFG:
 if __name__ == "__main__":
     points = [GFG.Point(0, 5), GFG.Point(0, 3), GFG.Point(1, 1), GFG.Point(2, 0), GFG.Point(5, 2), GFG.Point(4,6), GFG.Point(3, 8), GFG.Point(1, 7)]
     n = len(points)
-    GFG.mQDP(points, n)
+    output = GFG.mQDP(points, n)
+    print("Area of smallest quadrilateral = "+str(output))
     
