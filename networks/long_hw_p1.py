@@ -54,9 +54,9 @@ def rough_draw(G,units,steps_per_unit):
             edge_signs[1]+=1
     return edge_signs
 
-G = generate_graph(100,-0.25,0.75)
+G = generate_graph(100,-0.5,0.5)
 steps_per_unit = 20
-units = 0.9
+units = 4.1
 run_updates(G,units,steps_per_unit)
 edge_signs = smooth_draw(G,units,steps_per_unit)
 print(edge_signs)
