@@ -1,0 +1,4 @@
+(executable
+ (public_name midterm2)
+ (name main)
+ (libraries midterm2))
