@@ -1,0 +1,1 @@
+= Unify {('a = G('c,'b,'c), F(G('b,'c,H('d)),'e) = F('a,'d))} by Decompose on F('a,F(G('b,'c,H('d)),'e)) = F(G('c,'b,'c),F('a,'d)) 

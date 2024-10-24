@@ -1,0 +1,40 @@
+review ways of foing layout with css
+Flexbox and grids worth reviewing 
+CSS preprocessors: SASS 
+rewrite a piece of css for a preprocessor
+compile preprocessed css into normal css
+review how funcitonal aspects of JS make it object oriented
+Function context
+comfortable defining classes
+use typescript if you want
+vanilla JS has different scope rules than typescript
+set through funcitons not curly braces
+currying making private variables etc.
+
+Javascript to manipulate DOM tree
+how to traverse a dom tree 
+types of functions you would use
+access different css properties using JS
+codepen for event processing (maybe rewatch lecture)*
+review ways to add event listeners
+review example of dragging llama around*
+
+React:
+Just go through mp2
+how to create react components
+Virtual dom and JSX
+not theoretical, more applied knowledge, how we have already used it
+testing ability to write react code
+
+ES6 (probably less important) 
+they might say that you have to use ES6 and fat arrow functions, but in general if they
+don't specify you can write it in any JS variant 
+
+Actually need to write application level joins in MONGO
+Able to design a RESTful API
+defining endpoints
+http methods (verbs)
+
+don't spend a lot of time reviewing Tuesday's lecture, but concepts are still fair game
+testing theory more than the applied stuff
+not tested on writing node/express stlye code
