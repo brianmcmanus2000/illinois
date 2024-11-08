@@ -3,31 +3,6 @@ from networkx.algorithms import bipartite
 import csv
 import matplotlib.pyplot as plt
 
-# def get_preferences():
-#     node_list = []
-#     with open('preference.csv', newline='') as csvfile:
-#         spamreader = csv.reader(csvfile, delimiter=",", quotechar='"')
-#         for row in spamreader:
-#             node_list.append((row[0],{'preferences':row[1:None]}))
-#     return node_list
-
-# G = nx.Graph()
-# buyers = get_preferences()
-# houses = get_initial_prices()
-# G.add_nodes_from(houses,bipartite=0)
-# G.add_nodes_from(buyers,bipartite=1)
-
-# We start with all hub scores and all authority scores equal to 1.
-# We choose a number of steps, k.
-# We then perform a sequence of k hub–authority updates. Each update works as
-# follows:
-# – First apply the Authority Update Rule to the current set of scores.
-# – Then apply the Hub Update Rule to the resulting set of scores.
-# At the end, the hub and authority scores may involve numbers that are very large.
-# However, we only care about their relative sizes, so we can normalize to make
-# them smaller: we divide down each authority score by the sum of all authority
-# scores, and divide down each hub score by the sum of all hub scores.
-
 # test1
 # Top 3 Hubs : 1,2,3
 # Top 3 Authorities: 1,2,3
@@ -35,12 +10,14 @@ import matplotlib.pyplot as plt
 # Top 3 Hubs: 12,2100,387
 # Top 3 Authorities: 10897,21443,38976
 
-def create_graph_from_file(filename:str):
+def create_graph_from_file(filename:str, offset:int):
     hubs = set()
     authorities = set()
     edges = []
     with open(filename, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=",", quotechar='"')
+        for _ in range(offset):
+            next(spamreader, None)
         for row in spamreader:
             hubs.add("hub:"+str(row[0]))
             authorities.add("authority:"+str(row[1]))
@@ -51,16 +28,64 @@ def create_graph_from_file(filename:str):
     G.add_edges_from(edges)
     return G
 
-G = create_graph_from_file("test1.txt")
-hubs = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 0]
-authorities = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 1]
-hub_weights = [w for n, w in hubs]
-authority_weights = [w for n, w in authorities]
-for node, _ in hubs:
-    G.nodes[node]['weight'] += 1
-print(hub_weights)
-hub_weights = [w for n, w in G.nodes(data=True) if G.nodes[n]["bipartite"] == 0]
-print(hub_weights)
+def sum_of_neighbors(G, node):
+    neighbors = list(G.neighbors(node))  # Convert iterator to list
+    return sum(G.nodes[n]['weight'] for n in neighbors)
 
-nx.draw_networkx(G, pos=nx.drawing.layout.bipartite_layout(G, [n for n, _ in hubs]))
-plt.show()
+def normalize(G):
+    hub_sum = sum(w['weight'] for n, w in G.nodes(data=True) if G.nodes[n]["bipartite"] == 0)
+    authority_sum = sum(w['weight'] for n, w in G.nodes(data=True) if G.nodes[n]["bipartite"] == 1)
+    
+    hubs = [n for n, d in G.nodes(data=True) if d["bipartite"] == 0]
+    authorities = [n for n, d in G.nodes(data=True) if d["bipartite"] == 1]
+    
+    for hub in hubs:
+        G.nodes[hub]['weight'] /= hub_sum
+    for authority in authorities:
+        G.nodes[authority]['weight'] /= authority_sum
+
+def run_hits_once(G):
+    hubs = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 0]
+    authorities = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 1]
+    
+    # Use node[0] to get just the node name from the (node, weight) tuple
+    for authority, _ in authorities:  # Changed to unpack tuple
+        increment = sum_of_neighbors(G, authority)
+        G.nodes[authority]['weight'] += increment
+        
+    for hub, _ in hubs:  # Changed to unpack tuple
+        increment = sum_of_neighbors(G, hub)
+        G.nodes[hub]['weight'] += increment
+    
+    normalize(G)
+def run_hits_k_times(G, k):
+    for _ in range(k):
+        run_hits_once(G)
+    
+def print_weights(G):
+    for node in G.nodes:
+        print(str(node) + "weight: " +str(G.nodes[node]['weight']))
+
+def get_highest_auths(G):
+    # Get all authority nodes with their weights
+    authorities = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 1]
+    # Sort by weight in descending order and take top 3
+    sorted_auths = sorted(authorities, key=lambda x: x[1], reverse=True)
+    return [node for node, _ in sorted_auths[:3]]
+
+def get_highest_hubs(G):
+    # Get all hub nodes with their weights
+    hubs = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 0]
+    # Sort by weight in descending order and take top 3
+    sorted_hubs = sorted(hubs, key=lambda x: x[1], reverse=True)
+    return [node for node, _ in sorted_hubs[:3]]
+
+G = create_graph_from_file("HITS_input2.txt",1)
+run_hits_k_times(G,10)  
+best_auths = get_highest_auths(G)
+best_hubs = get_highest_hubs(G)
+print(best_hubs)
+print(best_auths)
+hubs = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 0]
+# nx.draw_networkx(G, pos=nx.drawing.layout.bipartite_layout(G, [n for n, _ in hubs]))
+# plt.show()
