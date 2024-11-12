@@ -1,0 +1,10 @@
+Regexes:
+let id_char = numeric | alpha | "'" | "_"
+let hexadec = numeric | ['a' - 'f']
+let binary = '0' | '1'
+let open_comment = "(*"
+let close_comment = "*)"
+let whitespace = [' ' '\t' '\n']
+
+Tokens:
+all easy except

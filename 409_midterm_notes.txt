@@ -1,4 +1,4 @@
-review ways of foing layout with css
+review ways of doing layout with css
 Flexbox and grids worth reviewing 
 CSS preprocessors: SASS 
 rewrite a piece of css for a preprocessor
