@@ -1,5 +1,6 @@
 import networkx as nx, igraph as ig
 from collections import defaultdict
+import time
 
 def calculate_modularity(G, communities):
     m = G.number_of_edges()
@@ -72,5 +73,8 @@ def analyze_graph(file_path):
     print("Number of edges removed:", len(removed_edges))
 
 if __name__ == "__main__":
-    graph_file = "WattsStrogatz.txt"
-    analyze_graph(graph_file)        
+    t0 = time.time()
+    graph_file = "Barabasi.txt"
+    analyze_graph(graph_file)
+    t1 = time.time()
+    print(f"total time: {t1-t0}")

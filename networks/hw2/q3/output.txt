@@ -1,5 +1,1 @@
 Number of communities: 1, Modularity: -8.061875819698194e-16, Number of edges removed: 0
-Number of communities: 2, Modularity: 0.494998000004843, Number of edges removed: 357
-Number of communities: 3, Modularity: 0.6179980000020537, Number of edges removed: 368
-Number of communities: 4, Modularity: 0.7399980000035776, Number of edges removed: 379
-Number of communities: 5, Modularity: 0.7689980000032265, Number of edges removed: 390
