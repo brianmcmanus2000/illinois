@@ -1,6 +1,5 @@
 import networkx as nx
 from collections import defaultdict
-import matplotlib.pyplot as plt
 
 def calculate_modularity(G, communities):
     m = G.number_of_edges()
@@ -18,7 +17,25 @@ def calculate_modularity(G, communities):
                 kikj = degrees[i] * degrees[j] / (2 * m)
                 Q += (Aij - kikj)
     return Q / (2 * m)
-
+def calculate_edge_betweenness(G):
+    edge_betweenness = defaultdict(float)
+    for s in G.nodes():
+        paths = nx.single_source_shortest_path(G, s)
+        edge_contributions = defaultdict(float)
+        for t in paths:
+            if s == t:
+                continue
+            path = paths[t]
+            for i in range(len(path) - 1):
+                edge = tuple(sorted([path[i], path[i + 1]]))
+                edge_contributions[edge] += 1
+        for edge, contribution in edge_contributions.items():
+            edge_betweenness[edge] += contribution
+    Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
+    G0 = G.subgraph(Gcc[0])
+    N = len(G0)
+    edge_betweenness = {edge: weight / N for edge, weight in edge_betweenness.items()}
+    return dict(edge_betweenness)
 def find_communities(G, target_communities):
     working_graph = G.copy()
     removed_edges = []
@@ -37,7 +54,8 @@ def find_communities(G, target_communities):
             current_communities = num_communities
         if num_communities >= target_communities:
             break
-        edge_betweenness = nx.edge_betweenness_centrality(working_graph,normalized=False)
+        # edge_betweenness = nx.edge_betweenness_centrality(working_graph)
+        edge_betweenness = calculate_edge_betweenness(working_graph)
         if not edge_betweenness:
             break
         max_edge = max(edge_betweenness.items(), key=lambda x: x[1])[0]
@@ -70,4 +88,4 @@ def analyze_graph(file_path):
 
 if __name__ == "__main__":
     graph_file = "ErdosRenyi.txt"
-    analyze_graph(graph_file)
+    analyze_graph(graph_file)        

@@ -1,6 +1,5 @@
-import networkx as nx
+import networkx as nx, igraph as ig
 from collections import defaultdict
-import matplotlib.pyplot as plt
 
 def calculate_modularity(G, communities):
     m = G.number_of_edges()
@@ -37,7 +36,11 @@ def find_communities(G, target_communities):
             current_communities = num_communities
         if num_communities >= target_communities:
             break
-        edge_betweenness = nx.edge_betweenness_centrality(working_graph,normalized=False)
+        # For some reason the igraph implementation is orders of magnitude faster 
+        # than the networkx implementation, so I convert to igraph only for this part
+        g = ig.Graph(len(working_graph), list(zip(*list(zip(*nx.to_edgelist(working_graph)))[:2])))
+        betweenness_values  = ig.GraphBase.edge_betweenness(g)
+        edge_betweenness = {edge.tuple: betweenness for edge, betweenness in zip(g.es, betweenness_values)}
         if not edge_betweenness:
             break
         max_edge = max(edge_betweenness.items(), key=lambda x: x[1])[0]
@@ -69,5 +72,5 @@ def analyze_graph(file_path):
     print("Number of edges removed:", len(removed_edges))
 
 if __name__ == "__main__":
-    graph_file = "ErdosRenyi.txt"
-    analyze_graph(graph_file)
+    graph_file = "WattsStrogatz.txt"
+    analyze_graph(graph_file)        

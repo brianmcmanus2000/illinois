@@ -77,7 +77,7 @@ with open('basic_pagerank.txt', 'w') as f:
     for node, data in sorted_nodes:
         f.write(f"{node}: {data['weight']}\n")
 
-G = create_graph_from_file("data.txt", 0)
+G = create_graph_from_file("example1.txt", 0)
 G = scaled_basic_pagerank(G, 100)
 sorted_nodes = sorted(G.nodes(data=True), key=lambda x: int(x[0])) 
 
