@@ -18,6 +18,7 @@ def create_graph_from_file(filename:str, offset:int):
 
 def basic_pagerank(G, num_iterations, tolerance=1e-18):
     N = G.number_of_nodes()
+    # Start with each node having equal weight and sum of all weights = 1
     for node in G.nodes():
         G.nodes[node]['weight'] = 1.0/N
     
@@ -37,7 +38,7 @@ def basic_pagerank(G, num_iterations, tolerance=1e-18):
             # Update max difference
             max_diff = max(max_diff, abs(G.nodes[node]['weight'] - old_weights[node]))
         
-        # Check for convergence
+        # Check for convergence. Tolerance is set to 1e-18 to agree with the provided examples
         if max_diff < tolerance:
             print("stopped early in basic_pageranks at step "+str(n))
             break
@@ -57,6 +58,7 @@ def scaled_basic_pagerank(G, num_iterations, d=0.85, tolerance=1e-18):
             incoming = G.predecessors(node)
             rank_sum = sum(old_weights[in_node] / G.out_degree(in_node) 
                           for in_node in incoming)
+            # Scaled PageRank update
             G.nodes[node]['weight'] = (1-d)/N + d * rank_sum
             
             # Update max difference
@@ -68,15 +70,15 @@ def scaled_basic_pagerank(G, num_iterations, d=0.85, tolerance=1e-18):
             break
             
     return G
+# Run basic PageRank
 
 G = create_graph_from_file("data.txt", 0)
 G = basic_pagerank(G, 100)
 sorted_nodes = sorted(G.nodes(data=True), key=lambda x: int(x[0]))
-
 with open('basic_pagerank.txt', 'w') as f:
     for node, data in sorted_nodes:
         f.write(f"{node}: {data['weight']}\n")
-
+# Run scaled PageRank
 G = create_graph_from_file("example1.txt", 0)
 G = scaled_basic_pagerank(G, 100)
 sorted_nodes = sorted(G.nodes(data=True), key=lambda x: int(x[0])) 

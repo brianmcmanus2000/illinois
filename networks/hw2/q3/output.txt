@@ -1,1 +1,1 @@
-Number of communities: 1, Modularity: -8.061875819698194e-16, Number of edges removed: 0
+Number of communities: 1, Modularity: 1.935398289504661e-15, Number of edges removed: 0

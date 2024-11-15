@@ -29,10 +29,12 @@ def create_graph_from_file(filename:str, offset:int):
     return G
 
 def sum_of_neighbors(G, node):
-    neighbors = list(G.neighbors(node))  # Convert iterator to list
+    # Gets the sum of weights of neighbors of a node
+    neighbors = list(G.neighbors(node)) 
     return sum(G.nodes[n]['weight'] for n in neighbors)
 
 def normalize(G):
+    # Normalize hub and authority weights so that they sum to one
     hub_sum = sum(w['weight'] for n, w in G.nodes(data=True) if G.nodes[n]["bipartite"] == 0)
     authority_sum = sum(w['weight'] for n, w in G.nodes(data=True) if G.nodes[n]["bipartite"] == 1)
     
@@ -45,20 +47,21 @@ def normalize(G):
         G.nodes[authority]['weight'] /= authority_sum
 
 def run_hits_once(G):
+    # Update authority scores then hub scores.
     hubs = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 0]
     authorities = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 1]
-    
-    # Use node[0] to get just the node name from the (node, weight) tuple
-    for authority, _ in authorities:  # Changed to unpack tuple
+    # For each authority increment its weight by the sum of hubs pointing to it
+    for authority, _ in authorities: 
         increment = sum_of_neighbors(G, authority)
         G.nodes[authority]['weight'] += increment
-        
-    for hub, _ in hubs:  # Changed to unpack tuple
+    # Repeat the process for hubs
+    for hub, _ in hubs: 
         increment = sum_of_neighbors(G, hub)
         G.nodes[hub]['weight'] += increment
-    
     normalize(G)
+
 def run_hits_k_times(G, k):
+    # k iterations of HITS algorithm
     for _ in range(k):
         run_hits_once(G)
     
@@ -86,6 +89,3 @@ best_auths = get_highest_auths(G)
 best_hubs = get_highest_hubs(G)
 print(best_hubs)
 print(best_auths)
-hubs = [(n, d['weight']) for n, d in G.nodes(data=True) if d["bipartite"] == 0]
-# nx.draw_networkx(G, pos=nx.drawing.layout.bipartite_layout(G, [n for n, _ in hubs]))
-# plt.show()

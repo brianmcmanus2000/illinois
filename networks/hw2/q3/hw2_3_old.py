@@ -18,24 +18,19 @@ def calculate_modularity(G, communities):
                 Q += (Aij - kikj)
     return Q / (2 * m)
 def calculate_edge_betweenness(G):
-    edge_betweenness = defaultdict(float)
-    for s in G.nodes():
-        paths = nx.single_source_shortest_path(G, s)
-        edge_contributions = defaultdict(float)
-        for t in paths:
-            if s == t:
+    betweenness = defaultdict(float)
+    all_shortest_paths = dict(nx.all_pairs_all_shortest_paths(G))
+    for source, target_paths in all_shortest_paths.items():
+        for target, paths in target_paths.items():
+            if source == target:
                 continue
-            path = paths[t]
-            for i in range(len(path) - 1):
-                edge = tuple(sorted([path[i], path[i + 1]]))
-                edge_contributions[edge] += 1
-        for edge, contribution in edge_contributions.items():
-            edge_betweenness[edge] += contribution
-    Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
-    G0 = G.subgraph(Gcc[0])
-    N = len(G0)
-    edge_betweenness = {edge: weight / N for edge, weight in edge_betweenness.items()}
-    return dict(edge_betweenness)
+            num_paths = len(paths)
+            for path in paths:
+                for i in range(len(path) - 1):
+                    edge = (path[i], path[i + 1])
+                    betweenness[edge] += 1.0 / num_paths
+    #no need to normalize because we only care about which edge is maximal
+    return dict(betweenness)
 def find_communities(G, target_communities):
     working_graph = G.copy()
     removed_edges = []
