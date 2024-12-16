@@ -1,0 +1,1 @@
+Unify {(F(F('e,L('b)), P('b, P(P('e,'c), 'c))) = F('a, P('b, P('b, S)))), (F(L('b), L('c)) = F('d, 'e))} by Decompose on (F(L('b), L('c)) = F('d, 'e))
