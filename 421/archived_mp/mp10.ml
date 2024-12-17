@@ -45,58 +45,46 @@ let binOpApply binop (v1, v2) =
     | GreaterOp -> BoolVal(v1 > v2)
 
 let rec eval_exp (exp, m) = match exp with
-  ConstExp t -> const_to_val t
-  | VarExp x ->
-    let v = lookup_mem m x in (match v with 
-      RecVarVal(g, y, e, m') -> Closure(y, e, (ins_mem m' g (RecVarVal(g, y, e, m'))))
+  | ConstExp t -> const_to_val t
+  | VarExp x -> let v = lookup_mem m x in (match v with 
+      | RecVarVal(g, y, e, m') -> Closure(y, e, (ins_mem m' g (RecVarVal(g, y, e, m'))))
       | _ -> v)
   | MonOpAppExp (op, e) -> monOpApply op (eval_exp (e, m))
   | BinOpAppExp (op, e1, e2) -> binOpApply op ((eval_exp (e1, m)), (eval_exp (e2, m)))
-  | IfExp (e1, e2, e3) ->
-    let v1 = eval_exp (e1, m) in
-      (match v1 with 
+  | IfExp (e1, e2, e3) -> let v1 = eval_exp (e1, m) in (match v1 with 
         Exn _ -> v1
         | BoolVal true -> eval_exp (e2, m)
         | BoolVal false -> eval_exp (e3, m)
       )
-  | LetInExp (x, e1, e2) -> 
-    let v1 = eval_exp (e1, m) in 
-    (match v1 with
-      Exn _ -> v1
+  | LetInExp (x, e1, e2) -> let v1 = eval_exp (e1, m) in (match v1 with
+      | Exn _ -> v1
       | _ -> eval_exp (e2, (ins_mem m x v1)))
   | FunExp (x, e) -> Closure(x, e, m)
-  | AppExp (e1, e2) -> 
-    let v1 = eval_exp (e1, m) in
-    (match v1 with
-      Exn _ -> v1
-      | Closure(x, e', m') -> let v' = eval_exp (e2, m) in 
-      (match v' with
-        Exn _ -> v'
+  | AppExp (e1, e2) -> let v1 = eval_exp (e1, m) in (match v1 with
+      |Exn _ -> v1
+      | Closure(x, e', m') -> let v' = eval_exp (e2, m) in (match v' with
+        | Exn _ -> v'
         | _ -> eval_exp (e', (ins_mem m' x v'))
       )
     )
   | LetRecInExp (f, x, e1, e2) -> eval_exp(e2, (ins_mem m f (RecVarVal(f, x, e1, m))))
-  | RaiseExp e -> let v = eval_exp (e, m) in
-    (match v with 
-      Exn _ -> v
+  | RaiseExp e -> let v = eval_exp (e, m) in (match v with 
+      | Exn _ -> v
       | IntVal(n) -> Exn(n)
     )
-  | TryWithExp (e, intopt1, exp1, match_list) -> 
-    let v = eval_exp(e, m) in
-      (match v with
-        Exn(j) -> 
-          (match intopt1 with None -> v
+  | TryWithExp (e, intopt1, exp1, match_list) -> let v = eval_exp(e, m) in (match v with
+        Exn(j) -> (match intopt1 with 
+          |None -> v
           | Some i -> if i = j then eval_exp (exp1, m)
-            else let rec helper l = 
-            (match l with [] -> None
-            | (hd :: tl) -> 
-              (match hd with (None, exp) -> Some(eval_exp (exp, m))
-              | (Some i, exp) -> 
-                if i = j then Some(eval_exp (exp, m))
-                else helper tl
+            else let rec helper l = (match l with 
+            | [] -> None
+            | (hd :: tl) -> (match hd with 
+              | (None, exp) -> Some(eval_exp (exp, m))
+              | (Some i, exp) -> if i = j then Some(eval_exp (exp, m))else helper tl
               )
             )
-            in match (helper match_list) with None -> Exn(j)
+            in match (helper match_list) with 
+            | None -> Exn(j)
             | Some v' -> v'
           )
           
