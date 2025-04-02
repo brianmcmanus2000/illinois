@@ -1,0 +1,709 @@
+0010 | TIME SPENDING DIARY MODULE - 10/10/84 - DASII                                                                            
+0020 INTEGER 1,INA(9,300),READY,I,J,K,M,N,X,TTM,TM1,TM2,TT1,TT2,LN,INP,T,Q,RN,D(8),BOOZE(8),TRAVEL(2,2)                         
+0021 INTEGER 1, LFLDS(9),LFLDE(9),SFLD(9),FLDL(9),FLDR(9),INP0,I3,K2,J3,LN3,INP3,XBEN                                           
+0022 DIM NAME$(40),USER$(10),LINE$(128),S$(8),LTMPLT$(128),WEEK$(63),DAY$(9),DATA1$(40),DATA2$(40),ORG$(14),Q$(160)             
+0023 DIM FAMILY$(8),FAMCON$(3),OTHER1$(128),OTHER2$(128),OTHER3$(128),DATER$(8)                                                 
+0025 INTEGER 2,TTA(4,21),S,STIME,RTIME                                                                                          
+0030 LITERAL HRS(1),MINS(2),FRIENDS(3),OTHERS(4),ACT1(5),ACT2(6),PER1(7),ENDT(7),LN0(5),BEER(2),WINE(5),MIXED(8)                
+0035 LET LTMPLT$="<16><5>Y<29><20>        <21>  <20>        <21>  <20>        <21>  "                                           
+0036 LET LTMPLT$=LTMPLT$,"<20>        <21>  <20>        <21>  <20>        <21><29>"                                             
+0038 GOSUB "FKEY" | INITIALIZE FKEY                                                                                             
+0040 |                                                                                                                          
+0041 |              DATA LAYOUT                                                                                                 
+0042 |                                                                                                                          
+0043 | INA : Stores subject input. Layout:                                                                                      
+0044 |       INA(HRS,#),INA(MINS,#),INA(ACT1,#),INA(ACT2,#),INA(ENDT+HRS,#),INA(ENDT+MINS,#),INA(PER1,#),                       
+0045 |       INA(FRIENDS,#),INA(OTHERS,#)                                                                                       
+0046 |   # is the sequential number of the  reported event.                                                                     
+0050 |                                                                                                                          
+0051 | TTA : Total times by activity code. Layout:                                                                              
+0052 |       TTA(HRS,#),TTA(MINS,#),TTA(FRIENDS,#),TTA(OTHERS,#)                                                                
+0053 |   # is the activity code + 1.  HRS,MINS is the total time for the activity.                                              
+0054 |   FRIENDS and OTHERS are weighted means.                                                                                 
+0055 |                                                                                                                          
+0056 |                                                                                                                          
+0057 |                                                                                                                          
+0058 |                                                                                                                          
+0059 |                                                                                                                          
+0060 LET WEEK$="MONDAY<0><0><0>TUESDAY<0><0>WEDNESDAYTHURSDAY<0>FRIDAY<0><0><0>SATURDAY<0>SUNDAY<0><0><0>"                      
+0100 |  BEGIN MAIN PROGRAM                                                                                                      
+0110 GOSUB 1000 | INIT INCLUDING CHECK SUBJ HAS FORM.                                                                           
+0120 IF READY=1 DO                                                                                                              
+0130   GOSUB 2000 | INPUT EDITOR                                                                                                
+0135   LET RTIME=SYS(0)                                                                                                         
+0140   GOSUB 5000 | BUILD TTA                                                                                                   
+0145   GOSUB 6000 | WRITE DATA1 & START DATA2                                                                                   
+0150   | STORE DATA FOR FOLLOWUPS                                                                                               
+0160   OPEN FILE(6,1),"?DIARY"                                                                                                  
+0170   WRITE FILE(6),N,DATER$,STIME,RTIME                                                                                       
+0190   FOR I=1 TO 4                                                                                                             
+0191     FOR J=1 TO 21                                                                                                          
+0193       WRITE FILE(6),TTA(I,J)                                                                                               
+0195     NEXT J                                                                                                                 
+0197   NEXT I                                                                                                                   
+0200   CLOSE FILE(6)                                                                                                            
+0220 ELSE                                                                                                                       
+0230   OPEN FILE(2,2),"?COM"                                                                                                    
+0240   PRINT FILE(2),"TP 2"                                                                                                     
+0250   CLOSE FILE(2)                                                                                                            
+0260   PRINT "<12>     Please return your completed form (including your social security"                                       
+0270   PRINT "     number)  to Bev Wiggins or Joan Healy <20>before 5pm tomorrow<21>.   Your"                                   
+0280   PRINT "     session  for  this week will be considered <20>incomplete<21>  until  you"                                   
+0290   PRINT "     have turned in your completed form."                                                                         
+0300   PRINT                                                                                                                    
+0310   PRINT "     This  is very important as our study is greatly weakened  without"                                           
+0320   PRINT "     your  information.   Please do your best to remember the form the"                                           
+0330   PRINT "     next  time  you  are  asked  to  report  your  daily  activities."                                           
+0340   PRINT "     Whenever you forget,  we will have to enter the information  from"                                           
+0350   PRINT "     your form onto the computer ourselves and this is very expensive."                                           
+0360   PRINT                                                                                                                    
+0370   PRINT                                                                                                                    
+0380   GOSUB "TA.EB"                                                                                                            
+0390   LREAD "                 **** Press NEW-LINE to continue. ****",K$                                                        
+0400   | REPORT TO BEV                                                                                                          
+0410   OPEN FILE(3,3),"NAME"                                                                                                    
+0420   LREAD FILE(3),NAME$                                                                                                      
+0430   CLOSE FILE(3)                                                                                                            
+0440   OPEN FILE(3,3),"USER"                                                                                                    
+0450   LREAD FILE(3),USER$                                                                                                      
+0460   CLOSE FILE(3)                                                                                                            
+0470   LET K=7                                                                                                                  
+0500   WHILE K=7 DO                                                                                                             
+0510     LOCK 1,":REPORT:DAILY",0,1,K                                                                                           
+0520   ENDWHILE                                                                                                                 
+0530   OPEN FILE(2,2),":REPORT:DAILY"                                                                                           
+0540   PRINT FILE(2)                                                                                                            
+0541   PRINT FILE(2),"***** ";NAME$;"  ";USER$;"  INCOMPLETE DIARY ";STR$(RN);" *****"                                          
+0542   PRINT FILE(2)                                                                                                            
+0550   CLOSE FILE(2)                                                                                                            
+0560   UNLOCK 1                                                                                                                 
+0570   CHAIN ":SUPERX:XXS6.MAIN" THEN GOTO 300                                                                                  
+0590 ENDIF                                                                                                                      
+0600 | EXIT PROGRAM                                                                                                             
+0610 CHAIN ":EXPER:DIARY.FOLLOWUP"                                                                                              
+0620 STOP                                                                                                                       
+1000 REM INIT STUB                                                                                                              
+1001 LET READY=1                                                                                                                
+1020 | INIT ARRAYS                                                                                                              
+1030 FOR I=1 TO 21                                                                                                              
+1032   FOR J=1 TO 4                                                                                                             
+1035     LET TTA(J,I)=0                                                                                                         
+1037   NEXT J                                                                                                                   
+1038 NEXT I                                                                                                                     
+1040 FOR I=1 TO 300                                                                                                             
+1042   FOR J=1 TO 9                                                                                                             
+1045     LET INA(J,I)=-1                                                                                                        
+1047   NEXT J                                                                                                                   
+1048 NEXT I                                                                                                                     
+1050 LET INA(HRS,1)=0                                                                                                           
+1060 LET INA(MINS,1)=0                                                                                                          
+1100 REM INIT LFLDS,LFLDE, & SFLD POINTERS                                                                                      
+1110 LET LFLDS(HRS)=6 | START OF FIELD POINTERS INTO LINE$                                                                      
+1111 LET LFLDS(ACT1)=18                                                                                                         
+1112 LET LFLDS(ENDT+HRS)=30                                                                                                     
+1113 LET LFLDS(PER1)=42                                                                                                         
+1114 LET LFLDS(FRIENDS)=54                                                                                                      
+1115 LET LFLDS(OTHERS)=66                                                                                                       
+1120 LET LFLDE(HRS)=13 | END OF FIELD POINTERS INTO LINE$                                                                       
+1121 LET LFLDE(ACT1)=25                                                                                                         
+1122 LET LFLDE(ENDT+HRS)=37                                                                                                     
+1123 LET LFLDE(PER1)=49                                                                                                         
+1124 LET LFLDE(FRIENDS)=61                                                                                                      
+1125 LET LFLDE(OTHERS)=73                                                                                                       
+1130 LET SFLD(HRS)=5 | FIELD POINTERS ONTO CRT SCREEN                                                                           
+1131 LET SFLD(ACT1)=15                                                                                                          
+1132 LET SFLD(ENDT+HRS)=25                                                                                                      
+1133 LET SFLD(PER1)=35                                                                                                          
+1134 LET SFLD(FRIENDS)=45                                                                                                       
+1135 LET SFLD(OTHERS)=55                                                                                                        
+1200 REM SET LEFT & RIGHT FIELD POINTERS                                                                                        
+1201 LET FLDL(HRS)=OTHERS                                                                                                       
+1202 LET FLDL(ACT1)=HRS                                                                                                         
+1203 LET FLDL(ENDT+HRS)=ACT1                                                                                                    
+1204 LET FLDL(PER1)=ENDT+HRS                                                                                                    
+1205 LET FLDL(FRIENDS)=PER1                                                                                                     
+1206 LET FLDL(OTHERS)=FRIENDS                                                                                                   
+1211 LET FLDR(HRS)=ACT1                                                                                                         
+1212 LET FLDR(ACT1)=ENDT+HRS                                                                                                    
+1213 LET FLDR(ENDT+HRS)=PER1                                                                                                    
+1214 LET FLDR(PER1)=FRIENDS                                                                                                     
+1215 LET FLDR(FRIENDS)=OTHERS                                                                                                   
+1216 LET FLDR(OTHERS)=HRS                                                                                                       
+1300 | GET TREATMENT ETC.                                                                                                       
+1310 OPEN FILE(3,3),"TREATMENT"                                                                                                 
+1312 INPUT FILE(3),RN                                                                                                           
+1315 CLOSE FILE(3)                                                                                                              
+1320 OPEN FILE(3,3),"ASSIGN.DAYS"                                                                                               
+1322 INPUT FILE(3),D(1),D(2),D(3),D(4),D(5),D(6),D(7),D(8)                                                                      
+1325 CLOSE FILE(3)                                                                                                              
+1330 LET DAY$=WEEK$(D(RN)*9-8,D(RN)*9)                                                                                          
+1350 OPEN FILE(3,3),"DATAFILES"                                                                                                 
+1360 INPUT FILE(3),DATA1$,DATA2$                                                                                                
+1370 CLOSE FILE(3)                                                                                                              
+1400 | CHECK THAT R HAS FORM.                                                                                                   
+1410 PRINT "<12>     TIME DIARY STUDY : REPORT #";STR$(RN)                                                                      
+1411 PRINT "<16><5><3>Last week you were asked to record your activities for ";DAY$;"."                                         
+1412 PRINT "Did you remember to bring your COMPLETED time diary form for ";DAY$;" to"                                           
+1413 PRINT "today's session?  (Answer YES or NO)"                                                                               
+1420 PRINT "<16><5><12><11>?";                                                                                                  
+1422 GOSUB "TA.EB"                                                                                                              
+1425 GOSUB "FKEY"                                                                                                               
+1430 IF FKEY$="Y" OR FKEY$="N" THEN LET FSTR$=FKEY$                                                                             
+1435 IF POS(FSTR$,"N",0)=0 AND POS(FSTR$,"Y",0)=0 DO | INVALID INPUT                                                            
+1440   PRINT "<16><5><17>You must answer YES or NO.  Please try again."                                                         
+1445   DELAY=3                                                                                                                  
+1450   GOTO 1420                                                                                                                
+1455 ENDIF                                                                                                                      
+1457 LET STIME=SYS(0)                                                                                                           
+1460 IF POS(FSTR$,"Y",0)>0 DO                                                                                                   
+1461   LET READY=1                                                                                                              
+1465   GOSUB 1500 | GET DATER$                                                                                                  
+1470   IF RN=1 DO                                                                                                               
+1471     OPEN FILE(3,3),":EXPER:DIARY1.INSTR"                                                                                   
+1472   ELSE                                                                                                                     
+1473     OPEN FILE(3,3),":EXPER:DIARYN.INSTR"                                                                                   
+1474   ENDIF                                                                                                                    
+1475   GOSUB "LIST3"                                                                                                            
+1482 ELSE                                                                                                                       
+1483   LET READY=0                                                                                                              
+1484 ENDIF                                                                                                                      
+1490 RETURN                                                                                                                     
+1500 REM GET DATER$                                                                                                             
+1510 GOSUB "TA.EB"                                                                                                              
+1520 LREAD "<10>What is the Date about which you are reporting. (Enter mm/dd/yy) ",DATER$                                       
+1530 ON ERR THEN GOTO 1600                                                                                                      
+1540 LET J=VAL(DATER$)                                                                                                          
+1542 IF J<1 OR J>12 THEN GOTO 1600                                                                                              
+1550 LET I=POS(DATER$,"/",0)+1                                                                                                  
+1552 IF I=1 THEN GOTO 1600                                                                                                      
+1555 LET J=VAL(DATER$(I))                                                                                                       
+1557 IF J<1 OR J>31 THEN GOTO 1600                                                                                              
+1560 LET I=POS(DATER$,"/",I)+1                                                                                                  
+1562 IF I=1 THEN GOTO 1600                                                                                                      
+1565 LET J=VAL(DATER$(I))                                                                                                       
+1570 IF J<>84 THEN GOTO 1600                                                                                                    
+1580 ON ERR THEN STOP                                                                                                           
+1590 RETURN                                                                                                                     
+1600 REM DATE ERROR                                                                                                             
+1610 ON ERR THEN STOP                                                                                                           
+1620 PRINT "<10>     You must enter mm/dd/yy.  For example 10/24/84.  Please try again."                                        
+1630 DELAY=4                                                                                                                    
+1640 PRINT "<12>";                                                                                                              
+1650 GOTO 1500                                                                                                                  
+1990 RETURN                                                                                                                     
+2000 REM INPUT EDITOR                                                                                                           
+2001 LET N=0                                                                                                                    
+2010 LET INP0=8                                                                                                                 
+2020 GOSUB 3800 | WRITE INIT SCREEN                                                                                             
+2030 LET INP=1                                                                                                                  
+2040 LET LN=1                                                                                                                   
+2060 LET FKEY$="*"                                                                                                              
+2070 LET K=ACT1                                                                                                                 
+2100 WHILE FKEY$<>"|" DO | EDIT LOOP                                                                                            
+2110   LET Q=1                                                                                                                  
+2120   GOSUB 4000                                                                                                               
+2130   LET S$="<16>",CHR$(SFLD(K)),CHR$(LN+LN0-1)                                                                               
+2140   LWRITE S$                                                                                                                
+2150   GOSUB "FKEY"                                                                                                             
+2155   IF LEN(FSTR$)>0 DO                                                                                                       
+2160     IF K=HRS OR K=ENDT+HRS THEN GOSUB 3000                                                                                 
+2170     IF K=ACT1 THEN GOSUB 3200                                                                                              
+2180     IF K=PER1 THEN GOSUB 3300                                                                                              
+2190     IF K=FRIENDS OR K=OTHERS THEN GOSUB 3400                                                                               
+2195   ENDIF                                                                                                                    
+2200   LET Q=0                                                                                                                  
+2210   GOSUB 4000                                                                                                               
+2220   IF FKEY$="^" THEN GOSUB 2500                                                                                             
+2230   IF FKEY$="_" THEN GOSUB 2600                                                                                             
+2240   IF FKEY$="}" OR FKEY$=">" THEN GOSUB 2700                                                                                
+2250   IF FKEY$="{" OR FKEY$="<" THEN GOSUB 2800                                                                                
+2260   IF FKEY$="#" THEN GOSUB 3500 | INSERT A LINE                                                                             
+2270   IF FKEY$="&" DO                                                                                                          
+2275     IF K=OTHERS DO                                                                                                         
+2276       GOSUB 2600 | NEWLINE MEANS NEW LINE AT END OF LINE                                                                   
+2277     ELSE                                                                                                                   
+2278       GOSUB 2700 | NEWLINE MEANS NEXT FIELD IN MIDDLE OF LINE                                                              
+2280     ENDIF                                                                                                                  
+2285   ENDIF                                                                                                                    
+2290 ENDWHILE                                                                                                                   
+2295 GOSUB 2600                                                                                                                 
+2300 | VALIDITY CHECK                                                                                                           
+2305 GOSUB "WORKING"                                                                                                            
+2310 IF INA(ACT1,1)<0 OR INA(ACT1,1)>20 DO                                                                                      
+2315   PRINT "<12><16><0><4>You must use the activity codes specified on page 3 of the TIME DIARY FORM."                        
+2316   PRINT "Please try again."                                                                                                
+2320   DELAY=3                                                                                                                  
+2325   GOTO 2000                                                                                                                
+2330 ENDIF                                                                                                                      
+2335 LET INP=2                                                                                                                  
+2340 LET LN=2                                                                                                                   
+2345 WHILE INP<=N DO                                                                                                            
+2350   WHILE INA(ACT1,INP)=-1 AND N>=INP DO                                                                                     
+2355     GOSUB 3600                                                                                                             
+2360     GOSUB "WORKING"                                                                                                        
+2365   ENDWHILE                                                                                                                 
+2370   IF N>=INP DO                                                                                                             
+2375     IF INA(HRS,INP)<>INA(ENDT+HRS,INP-1) OR INA(MINS,INP)<>INA(ENDT+MINS,INP-1) DO                                         
+2380       PRINT "<12><16><0><4>You must account for ALL times.  Please make sure the begining time matches"                    
+2381       PRINT "the previous end time."                                                                                       
+2385       DELAY=3                                                                                                              
+2390       GOSUB 3900                                                                                                           
+2395       LET FKEY$="*"                                                                                                        
+2400       GOTO 2100                                                                                                            
+2405     ENDIF                                                                                                                  
+2410     LET LN=LN+1                                                                                                            
+2415     IF LN>=9 THEN LET LN=LN-8                                                                                              
+2420     LET INP=INP+1                                                                                                          
+2425   ENDIF                                                                                                                    
+2430 ENDWHILE                                                                                                                   
+2440 IF INA(ENDT+HRS,N)<>24 DO                                                                                                  
+2445   PRINT "<12><16><0><4>You must account for the entire day.  Please continue."                                             
+2460   DELAY=3                                                                                                                  
+2465   GOSUB 3900                                                                                                               
+2470   LET FKEY$="*"                                                                                                            
+2475   GOTO 2100                                                                                                                
+2480 ENDIF                                                                                                                      
+2490 RETURN                                                                                                                     
+2500 | MOVE UP                                                                                                                  
+2510 IF INP=1 THEN RETURN                                                                                                       
+2520 LET INP=INP-1                                                                                                              
+2525 LET LN=LN-1                                                                                                                
+2530 LET K=HRS                                                                                                                  
+2535 IF INP=1 THEN LET K=ACT1                                                                                                   
+2540 IF LN<1 DO                                                                                                                 
+2545   LET INP0=INP                                                                                                             
+2550   GOSUB 3800                                                                                                               
+2555   LET INP=INP0                                                                                                             
+2560   LET LN=8                                                                                                                 
+2570 ENDIF                                                                                                                      
+2580 RETURN                                                                                                                     
+2600 | MOVE DOWN                                                                                                                
+2603 IF INA(FRIENDS,INP)=-1 THEN LET INA(FRIENDS,INP)=0                                                                         
+2605 IF INA(OTHERS,INP)=-1 THEN LET INA(OTHERS,INP)=0                                                                           
+2610 IF INA(HRS,INP)>-1 AND INA(MINS,INP)>-1 AND INA(ENDT+HRS)>-1 AND INP>N THEN LET N=INP                                      
+2620 LET INP=INP+1                                                                                                              
+2625 LET LN=LN+1                                                                                                                
+2630 LET K=HRS                                                                                                                  
+2635 IF INP=1 THEN LET K=ACT1                                                                                                   
+2640 IF LN>15 DO                                                                                                                
+2645   LET INP0=INP                                                                                                             
+2650   GOSUB 3800                                                                                                               
+2655   LET INP=INP0                                                                                                             
+2660   LET LN=8                                                                                                                 
+2665 ENDIF                                                                                                                      
+2699 RETURN                                                                                                                     
+2700 | MOVE RIGHT                                                                                                               
+2710 LET K=FLDR(K)                                                                                                              
+2715 IF K=HRS AND INP=1 THEN LET K=FLDR(K)                                                                                      
+2720 IF K=PER1 AND INA(ACT2,INP)=99 THEN LET K=FLDR(K)                                                                          
+2730 IF INA(ACT1,INP)=0 AND ORD(FKEY$)=38 AND K=FRIENDS THEN GOSUB 2600                                                         
+2740 WHILE INA(ACT1,INP)=0 AND (K-FRIENDS)*(K-OTHERS)=0 DO                                                                      
+2750   LET K=FLDR(K)                                                                                                            
+2760 ENDWHILE                                                                                                                   
+2770 RETURN                                                                                                                     
+2800 | MOVE LEFT                                                                                                                
+2810 LET K=FLDL(K)                                                                                                              
+2815 IF K=HRS AND INP=1 THEN LET K=FLDR(K)                                                                                      
+2820 WHILE INA(ACT1,INP)=0 AND (K-FRIENDS)*(K-OTHERS)=0 DO                                                                      
+2830   LET K=FLDL(K)                                                                                                            
+2840 ENDWHILE                                                                                                                   
+2850 IF K=PER1 AND INA(ACT2,INP)=99 THEN LET K=FLDL(K)                                                                          
+2860 RETURN                                                                                                                     
+3000 | READ A TIME                                                                                                              
+3005 ON ERR THEN GOTO 3180                                                                                                      
+3010 LET S=VAL(FSTR$)                                                                                                           
+3015 IF S<1 OR S>12 THEN GOTO 3180                                                                                              
+3020 LET FSTR$=FSTR$(POS(FSTR$,":",0)-1)                                                                                        
+3025 LET FSTR$=FSTR$(3) | MAKES SURE FSTR$ HAD AT LEAST ONE CHAR PRECEEDING A COLON.                                            
+3030 LET M=VAL(FSTR$)                                                                                                           
+3035 IF M<0 OR M>59 THEN GOTO 3180                                                                                              
+3040 IF POS(FSTR$,"M",0)=0 AND POS(FSTR$,"N",0)=0 DO                                                                            
+3045   LET FSTR$="AM"                                                                                                           
+3050   IF INP>1 THEN IF S<INA(K,INP-1) THEN LET FSTR$="PM"                                                                      
+3055   IF INP>1 THEN IF S=12 AND INA(K,INP-1)>0 THEN LET FSTR$="PM"                                                             
+3057   IF INP>1 THEN IF S=12 AND INA(K,INP-1)>12 THEN LET FSTR$="M"                                                             
+3060 ENDIF                                                                                                                      
+3065 IF POS(FSTR$,"PM",0)>0 AND S<12 DO                                                                                         
+3070   LET S=S+12                                                                                                               
+3075 ELSE                                                                                                                       
+3080   IF S=12 AND POS(FSTR$,"AM",0)+POS(FSTR$,"PM",0)+POS(FSTR$,"N",0)=0 THEN LET S=24                                         
+3085   IF S=12 AND POS(FSTR$,"AM",0)>0 THEN LET S=0                                                                             
+3090 ENDIF                                                                                                                      
+3100 IF S=24 AND M<>0 THEN GOTO 3180                                                                                            
+3110 LET INA(K,INP)=S                                                                                                           
+3120 LET INA(K+1,INP)=M                                                                                                         
+3125 IF INP>1 THEN IF K=HRS THEN IF S<>INA(ENDT+HRS,INP-1) OR M<>INA(ENDT+MINS,INP-1) THEN GOTO 3180                            
+3130 ON ERR THEN STOP                                                                                                           
+3140 RETURN                                                                                                                     
+3180 ON ERR THEN STOP                                                                                                           
+3182 LET INA(K,INP)=-1                                                                                                          
+3185 LET INA(K+1,INP)=-1                                                                                                        
+3187 PRINT "<7>";                                                                                                               
+3189 LET FKEY$="*"                                                                                                              
+3190 RETURN                                                                                                                     
+3200 | READ ACT1 & ACT2                                                                                                         
+3210 ON ERR THEN GOTO 3280                                                                                                      
+3220 LET INA(ACT1,INP)=VAL(FSTR$)                                                                                               
+3222 IF INA(ACT1,INP)<0 THEN GOTO 3600                                                                                          
+3225 IF INA(ACT1,INP)>20 THEN GOTO 3280                                                                                         
+3230 IF POS(FSTR$,",",0)>0 DO                                                                                                   
+3232   LET INA(ACT2,INP)=VAL(FSTR$(POS(FSTR$,",",0)+1))                                                                         
+3233   IF INA(ACT2,INP)<0 OR INA(ACT2,INP)>20 THEN GOTO 3280                                                                    
+3235 ELSE                                                                                                                       
+3240   LET INA(ACT2,INP)=99                                                                                                     
+3250   LET INA(PER1,INP)=100                                                                                                    
+3260 ENDIF                                                                                                                      
+3265 ON ERR THEN STOP                                                                                                           
+3270 RETURN                                                                                                                     
+3280 ON ERR THEN STOP                                                                                                           
+3282 LET INA(ACT1,INP)=-1                                                                                                       
+3285 LET INA(ACT2,INP)=-1                                                                                                       
+3290 PRINT "<7>";                                                                                                               
+3292 LET FKEY$="*"                                                                                                              
+3295 RETURN                                                                                                                     
+3300 | READ PERCENT OF ACTIVITY 1                                                                                               
+3305 IF INA(ACT2,INP)=99 DO                                                                                                     
+3307   LET INA(PER1,INP)=100                                                                                                    
+3310 ELSE                                                                                                                       
+3315   ON ERR THEN GOTO 3380                                                                                                    
+3320   LET INA(PER1,INP)=VAL(FSTR$)                                                                                             
+3325   IF INA(PER1,INP)>100 THEN GOTO 3380                                                                                      
+3330   IF INA(PER1,INP)<1 THEN GOTO 3380                                                                                        
+3340   ON ERR THEN STOP                                                                                                         
+3350 ENDIF                                                                                                                      
+3360 RETURN                                                                                                                     
+3380 ON ERR THEN STOP                                                                                                           
+3385 LET INA(K,INP)=-1                                                                                                          
+3390 PRINT "<7>";                                                                                                               
+3392 LET FKEY$="*"                                                                                                              
+3395 RETURN                                                                                                                     
+3400 | READ FRIEND AND OTHERS                                                                                                   
+3415 ON ERR THEN GOTO 3480                                                                                                      
+3420 LET INA(K,INP)=VAL(FSTR$)                                                                                                  
+3425 IF INA(K,INP)>500 THEN LET INA(K,INP)=501                                                                                  
+3428 IF INA(K,INP)=500 AND POS(FSTR$,"+",0)>0 THEN LET INA(K,INP)=501                                                           
+3430 IF INA(K,INP)<0 THEN LET INA(K,INP)=0                                                                                      
+3440 ON ERR THEN STOP                                                                                                           
+3460 RETURN                                                                                                                     
+3480 ON ERR THEN STOP                                                                                                           
+3485 LET INA(K,INP)=-1                                                                                                          
+3490 PRINT "<7>";                                                                                                               
+3492 LET FKEY$="*"                                                                                                              
+3495 RETURN                                                                                                                     
+3500 REM LINE INSERT                                                                                                            
+3510 IF INP<N DO                                                                                                                
+3520   FOR I3=N TO INP+1 STEP -1                                                                                                
+3530     FOR J3=1 TO 9                                                                                                          
+3540       LET INA(J3,I3+1)=INA(J3,I3)                                                                                          
+3550       IF I3=INP+1 THEN LET INA(J3,I3)=-1                                                                                   
+3560     NEXT J3                                                                                                                
+3570   NEXT I3                                                                                                                  
+3580   LET N=N+1                                                                                                                
+3585 ENDIF                                                                                                                      
+3590 GOSUB 2600                                                                                                                 
+3592 GOSUB 3900                                                                                                                 
+3595 RETURN                                                                                                                     
+3600 REM LINE DELETE                                                                                                            
+3610 IF INP<N DO                                                                                                                
+3620   FOR I3=INP TO N-1                                                                                                        
+3625     FOR J3=1 TO 9                                                                                                          
+3630       LET INA(J3,I3)=INA(J3,I3+1)                                                                                          
+3635     NEXT J3                                                                                                                
+3640   NEXT I3                                                                                                                  
+3650 ENDIF                                                                                                                      
+3651 IF N>1 DO                                                                                                                  
+3655   FOR J3=1 TO 9                                                                                                            
+3660     LET INA(J3,N)=-1                                                                                                       
+3665   NEXT J3                                                                                                                  
+3666   LET N=N-1                                                                                                                
+3669   GOSUB 2500                                                                                                               
+3671 ENDIF                                                                                                                      
+3680 GOSUB 3900                                                                                                                 
+3690 RETURN                                                                                                                     
+3800 REM WRITE INIT SCREEN                                                                                                      
+3810 PRINT "<12><16><5><2>Begin     Activity    End    %Time First #Friends #Others"                                            
+3820 PRINT "     Time      Number(s)   Time    Activity   Present  Present"                                                     
+3822 LET Q=0                                                                                                                    
+3825 LET LN=1                                                                                                                   
+3830 FOR I3=INP0-7 TO INP0+7                                                                                                    
+3840   IF I3>0 AND I3<=300 DO                                                                                                   
+3850     LET INP=I3                                                                                                             
+3855     GOSUB 4000                                                                                                             
+3860   ENDIF                                                                                                                    
+3865   LET LN=LN+1                                                                                                              
+3870 NEXT I3                                                                                                                    
+3890 RETURN                                                                                                                     
+3900 REM REWRITE SCREEN                                                                                                         
+3910 LET INP3=INP                                                                                                               
+3920 LET LN3=LN                                                                                                                 
+3930 LET INP0=INP+8-LN                                                                                                          
+3940 GOSUB 3800                                                                                                                 
+3950 LET INP=INP3                                                                                                               
+3960 LET LN=LN3                                                                                                                 
+3970 RETURN                                                                                                                     
+4000 REM WRITE A LINE OF INA TO SCREEN LINE LN0+LN-1; HIGHLIGHT IF Q=1                                                          
+4100 LET LINE$=LTMPLT$                                                                                                          
+4110 LET LINE$(3,3)=CHR$(LN+LN0-1)                                                                                              
+4120 IF Q=0 THEN LET LINE$(4,4)="<28>"                                                                                          
+4129 |                                                                                                                          
+4130 IF INP=1 OR INA(HRS,INP)+INA(MINS,INP)>0 DO                                                                                
+4135   FOR T=HRS TO ENDT+HRS STEP ENDT | FOR START TIME AND END TIME                                                            
+4140     IF INP=1 AND T=HRS DO                                                                                                  
+4150       LET S$="12:00M "                                                                                                     
+4160     ELSE                                                                                                                   
+4170       IF INA(T,INP)=-1 THEN GOTO 4400                                                                                      
+4180       LET S=INA(T,INP)                                                                                                     
+4190       IF S>12 DO                                                                                                           
+4200         LET S$="  :  PM"                                                                                                   
+4210         IF S=24 THEN LET S$="  :  M "                                                                                      
+4220         LET S=S-12                                                                                                         
+4230       ELSE                                                                                                                 
+4240         LET S$="  :  AM"                                                                                                   
+4245         IF S=12 THEN LET S$="  :  PM"                                                                                      
+4250         IF S=12 AND INA(T+1,INP)=0 THEN LET S$="  :  N "                                                                   
+4260         IF S=0 THEN LET S=12                                                                                               
+4270       ENDIF                                                                                                                
+4272       IF S<10 DO                                                                                                           
+4273         LET S$(2,2)=STR$(S)                                                                                                
+4274       ELSE                                                                                                                 
+4280         LET S$(1,2)=STR$(S)                                                                                                
+4282       ENDIF                                                                                                                
+4285       IF INA(T+1,INP)<10 DO                                                                                                
+4286         LET S$(4,5)="0",STR$(INA(T+1,INP))                                                                                 
+4287       ELSE                                                                                                                 
+4290         LET S$(4,5)=STR$(INA(T+1,INP))                                                                                     
+4300       ENDIF                                                                                                                
+4310     ENDIF                                                                                                                  
+4320     LET LINE$(LFLDS(T),LFLDE(T))=S$                                                                                        
+4400   NEXT T                                                                                                                   
+4500   IF INA(ACT1,INP)>-1 DO                                                                                                   
+4510     LET S$=STR$(INA(ACT1,INP))                                                                                             
+4520     IF INA(ACT2,INP)<99 THEN LET S$=S$,", ",STR$(INA(ACT2,INP))                                                            
+4530     LET LINE$(LFLDS(ACT1),LFLDE(ACT1))=S$                                                                                  
+4540   ENDIF                                                                                                                    
+4550   IF INA(PER1,INP)>-1 AND INA(ACT2,INP)<99 DO                                                                              
+4560     LET S$=STR$(INA(PER1,INP)),"%"                                                                                         
+4570     LET LINE$(LFLDS(PER1),LFLDE(PER1))=S$                                                                                  
+4580   ENDIF                                                                                                                    
+4600   IF INA(FRIENDS,INP)>-1 AND INA(ACT1,INP)>0 DO                                                                            
+4610     LET S$=STR$(INA(FRIENDS,INP))                                                                                          
+4620     IF INA(FRIENDS,INP)=501 THEN LET S$="500+"                                                                             
+4630     LET LINE$(LFLDS(FRIENDS),LFLDE(FRIENDS))=S$                                                                            
+4640   ENDIF                                                                                                                    
+4650   IF INA(OTHERS,INP)>-1 AND INA(ACT1,INP)>0 DO                                                                             
+4660     LET S$=STR$(INA(OTHERS,INP))                                                                                           
+4665     IF INA(OTHERS,INP)=501 THEN LET S$="500+"                                                                              
+4670     LET LINE$(LFLDS(OTHERS),LFLDE(OTHERS))=S$                                                                              
+4680   ENDIF                                                                                                                    
+4690 ENDIF                                                                                                                      
+4700 LWRITE LINE$                                                                                                               
+4710 RETURN                                                                                                                     
+4999 STOP                                                                                                                       
+5000 REM BUILD TOTAL TIME ARRAY (TTA)                                                                                           
+5010 FOR I=1 TO N                                                                                                               
+5020   LET TTM=60*(INA(ENDT+HRS,I)-INA(HRS,I))+INA(ENDT+MINS,I)-INA(MINS,I) | END TIME - BEGINS TIME                            
+5030   LET TM1=TTM*INA(PER1,I)/100 | ADJUST TIME FOR ACT 1 PERCENTAGE                                                           
+5035   LET TT1=TM1+TTA(HRS,INA(ACT1,I)+1)*60+TTA(MINS,INA(ACT1,I)+1) | TOTAL ACT 1 SO FAR                                       
+5100   | ADD TIMES AND WMEANS FOR ACT 1                                                                                         
+5110   LET TTA(HRS,INA(ACT1,I)+1)=INT(TT1/60)                                                                                   
+5120   LET TTA(MINS,INA(ACT1,I)+1)=TT1-60*TTA(HRS,INA(ACT1,I)+1)                                                                
+5130   LET TTA(FRIENDS,INA(ACT1,I)+1)=TTA(FRIENDS,INA(ACT1,I)+1)+INA(FRIENDS,I)*TM1                                             
+5140   LET TTA(OTHERS,INA(ACT1,I)+1)=TTA(OTHERS,INA(ACT1,I)+1)+INA(OTHERS,I)*TM1                                                
+5200   | ADD TIMES AND WMEANS FOR ACT 2                                                                                         
+5205   IF INA(ACT2,I)<>99 DO                                                                                                    
+5206     LET TM2=TTM-TM1 | REMAINDER OF TIME TO ACT 2                                                                           
+5207     LET TT2=TM2+TTA(HRS,INA(ACT2,I)+1)*60+TTA(MINS,INA(ACT2,I)+1) | TOTAL ACT 2 SO FAR                                     
+5210     LET TTA(HRS,INA(ACT2,I)+1)=INT(TT2/60)                                                                                 
+5220     LET TTA(MINS,INA(ACT2,I)+1)=TT2-60*TTA(HRS,INA(ACT2,I)+1)                                                              
+5230     LET TTA(FRIENDS,INA(ACT2,I)+1)=TTA(FRIENDS,INA(ACT2,I)+1)+INA(FRIENDS,I)*TM2                                           
+5240     LET TTA(OTHERS,INA(ACT2,I)+1)=TTA(OTHERS,INA(ACT2,I)+1)+INA(OTHERS,I)*TM2                                              
+5250   ENDIF                                                                                                                    
+5260 NEXT I                                                                                                                     
+5300 | FINISH WEIGHTED MEANS                                                                                                    
+5310 FOR I=1 TO 21                                                                                                              
+5320   LET TTM=TTA(HRS,I)*60+TTA(MINS,I)                                                                                        
+5330   IF TTM>0 DO                                                                                                              
+5340     LET TTA(FRIENDS,I)=INT(TTA(FRIENDS,I)/TTM+.5)                                                                          
+5350     LET TTA(OTHERS,I)=INT(TTA(OTHERS,I)/TTM+.5)                                                                            
+5360   ENDIF                                                                                                                    
+5380 NEXT I                                                                                                                     
+5900 RETURN                                                                                                                     
+6000 REM DATA 1 SUBROUTINE (DIARY#.DATA). PLUS SUBINFO & REC 2 FOR DATA 2                                                       
+6010 OPEN FILE(1,1),DATA1$                                                                                                      
+6020 OPEN FILE(2,1),DATA2$                                                                                                      
+6030 OPEN FILE(3,3),"SUBINFO"                                                                                                   
+6040 WHILE EOF(3)<>1 DO                                                                                                         
+6050   LREAD FILE(3),LINE$                                                                                                      
+6060   IF EOF(3)<>1 DO                                                                                                          
+6070     PRINT FILE(1),LINE$                                                                                                    
+6080     PRINT FILE(2),LINE$                                                                                                    
+6090   ENDIF                                                                                                                    
+6100 ENDWHILE                                                                                                                   
+6110 CLOSE FILE(3)                                                                                                              
+6120 OPEN FILE(3,3),"SID"                                                                                                       
+6130 LREAD FILE(3),SID$                                                                                                         
+6140 CLOSE FILE(3)                                                                                                              
+6150 LET SID$=SID$,"          "                                                                                                 
+6160 PRINT FILE(1),"2  ";SID$;"  ";STR$(RN);TAB(19);STR$(D(RN));TAB(22);DATER$;TAB(32);STR$(STIME);TAB(39);STR$(RTIME);         
+6170 PRINT FILE(1),TAB(46);".";TAB(53);STR$(RTIME-STIME);TAB(60);"."                                                            
+6200 REM WRITE INA                                                                                                              
+6210 FOR I=1 TO N                                                                                                               
+6220   LET S$="0000",STR$(INA(HRS,I)*100+INA(MINS,I))                                                                           
+6230   LET S$=S$(LEN(S$)-3)                                                                                                     
+6240   PRINT FILE(1),"3  ";SID$;"  ";STR$(I);TAB(21);S$;TAB(32);STR$(INA(ACT1,I));TAB(36);                                      
+6250   IF INA(ACT2,I)=99 DO                                                                                                     
+6260     PRINT FILE(1),".";                                                                                                     
+6270   ELSE                                                                                                                     
+6280     PRINT FILE(1),STR$(INA(ACT2,I));                                                                                       
+6290   ENDIF                                                                                                                    
+6300   LET S$="0000",STR$(INA(ENDT+HRS,I)*100+INA(ENDT+MINS,I))                                                                 
+6310   LET S$=S$(LEN(S$)-3)                                                                                                     
+6320   PRINT FILE(1),TAB(40);S$;TAB(50);STR$(INA(PER1,I));                                                                      
+6330   PRINT FILE(1),TAB(55);STR$(INA(FRIENDS,I));TAB(61);STR$(INA(OTHERS,I))                                                   
+6340 NEXT I                                                                                                                     
+6350 CLOSE FILE(1)                                                                                                              
+6360 CLOSE FILE(2)                                                                                                              
+6370 RETURN                                                                                                                     
+8999 END                                                                                                                        
+9000 | INCLUDES                                                                                                                 
+9001 INCLUDE "TA.EB"                                                                                                            
+9010 INCLUDE "LIST3"                                                                                                            
+9011 INCLUDE "FKEY"                                                                                                             
+9012 INCLUDE "WORKING"                                                                                                          
+;                                                                                                                               
+0010 | DIARY - FOLLOWUP MODULE - 10/23/84 - DASII                                                                               
+0020 INTEGER 1,READY,I,J,K,M,N,X,TTM,TM1,TM2,TT1,TT2,LN,INP,T,Q,RN,D(8),BOOZE(8),TRAVEL(2,2)                                    
+0021 INTEGER 1, LFLDS(9),LFLDE(9),SFLD(9),FLDL(9),FLDR(9),INP0,I3,K2,J3,LN3,INP3,XBEN,SPORTS(2,3)                               
+0022 DIM NAME$(40),USER$(10),LINE$(128),S$(8),LTMPLT$(128),WEEK$(63),DAY$(9),DATA1$(40),ORG$(14),Q$(160),SPORTS$(21)            
+0023 DIM FAMILY$(8),FAMCON$(3),OTHER1$(128),OTHER2$(128),OTHER3$(128),DATA2$(40),DATER$(8),SID$(10)                             
+0025 INTEGER 2,TTA(4,21),S,STIME,RTIME,ETIME                                                                                    
+0030 LITERAL HRS(1),MINS(2),FRIENDS(3),OTHERS(4),ACT1(5),ACT2(6),PER1(7),ENDT(7),LN0(5),BEER(2),WINE(5),MIXED(8)                
+0035 LET LTMPLT$="<16><5>Y<29><20>        <21>  <20>        <21>  <20>        <21>  "                                           
+0036 LET LTMPLT$=LTMPLT$,"<20>        <21>  <20>        <21>  <20>        <21><29>"                                             
+0038 GOSUB "FKEY" | INITIALIZE FKEY                                                                                             
+0039 LET ORG$=" "                                                                                                               
+0040 |                                                                                                                          
+0041 |              DATA LAYOUT                                                                                                 
+0042 |                                                                                                                          
+0043 | INA : Stores subject input. Layout:                                                                                      
+0044 |       INA(HRS,#),INA(MINS,#),INA(ACT1,#),INA(ACT2,#),INA(ENDT+HRS,#),INA(ENDT+MINS,#),INA(PER1,#),                       
+0045 |       INA(FRIENDS,#),INA(OTHERS,#)                                                                                       
+0046 |   # is the sequential number of the  reported event.                                                                     
+0050 |                                                                                                                          
+0051 | TTA : Total times by activity code. Layout:                                                                              
+0052 |       TTA(HRS,#),TTA(MINS,#),TTA(FRIENDS,#),TTA(OTHERS,#)                                                                
+0053 |   # is the activity code + 1.  HRS,MINS is the total time for the activity.                                              
+0054 |   FRIENDS and OTHERS are weighted means.                                                                                 
+0055 |                                                                                                                          
+0056 |                                                                                                                          
+0057 |                                                                                                                          
+0058 |                                                                                                                          
+0059 |                                                                                                                          
+0060 LET WEEK$="MONDAY<0><0><0>TUESDAY<0><0>WEDNESDAYTHURSDAY<0>FRIDAY<0><0><0>SATURDAY<0>SUNDAY<0><0><0>"                      
+0100 |  BEGIN MAIN PROGRAM                                                                                                      
+0110 GOSUB 1000 | INIT INCLUDING CHECK SUBJ HAS FORM.                                                                           
+0150 GOSUB "DIARY.SPORTS"                                                                                                       
+0160 GOSUB "DIARY.EXERCISE"                                                                                                     
+0170 GOSUB "DIARY.ORG"                                                                                                          
+0180 GOSUB "DIARY.TRAVEL"                                                                                                       
+0190 GOSUB "DIARY.OTHER"                                                                                                        
+0200 GOSUB "DIARY.FAMILY"                                                                                                       
+0210 GOSUB "DIARY.BOOZE"                                                                                                        
+0220 LET ETIME=SYS(0)                                                                                                           
+0225 GOSUB "WORKING"                                                                                                            
+0240 GOSUB 4000 | WRITE DATA2$                                                                                                  
+0600 | EXIT PROGRAM                                                                                                             
+0610 CHAIN ":SUPERX:XXS6.MAIN" THEN GOTO 300                                                                                    
+0620 STOP                                                                                                                       
+1000 REM INIT STUB                                                                                                              
+1010 OPEN FILE(6,3),"?DIARY"                                                                                                    
+1020 READ FILE(6),N,DATER$,STIME,RTIME                                                                                          
+1100 FOR I=1 TO 4                                                                                                               
+1110   FOR J=1 TO 21                                                                                                            
+1120     READ FILE(6),TTA(I,J)                                                                                                  
+1130   NEXT J                                                                                                                   
+1140 NEXT I                                                                                                                     
+1150 CLOSE FILE(6)                                                                                                              
+1300 | GET TREATMENT ETC.                                                                                                       
+1310 OPEN FILE(3,3),"TREATMENT"                                                                                                 
+1312 INPUT FILE(3),RN                                                                                                           
+1315 CLOSE FILE(3)                                                                                                              
+1320 OPEN FILE(3,3),"ASSIGN.DAYS"                                                                                               
+1322 INPUT FILE(3),D(1),D(2),D(3),D(4),D(5),D(6),D(7),D(8)                                                                      
+1325 CLOSE FILE(3)                                                                                                              
+1330 LET DAY$=WEEK$(D(RN)*9-8,D(RN)*9)                                                                                          
+1350 OPEN FILE(3,3),"DATAFILES"                                                                                                 
+1360 INPUT FILE(3),DATA1$,DATA2$                                                                                                
+1370 CLOSE FILE(3)                                                                                                              
+1900 RETURN                                                                                                                     
+3000 REM GET SID                                                                                                                
+3010 OPEN FILE(3,3),"SID"                                                                                                       
+3020 LREAD FILE(3),SID$                                                                                                         
+3030 CLOSE FILE(3)                                                                                                              
+3040 RETURN                                                                                                                     
+4000 REM DATA 2 SUBROUTINE (TIMEREP#.DATA)                                                                                      
+4001 GOSUB 3000                                                                                                                 
+4002 OPEN FILE(2,2),DATA2$                                                                                                      
+4005 DEF FNM(X)=60*TTA(HRS,X+1)+TTA(MINS,X+1)                                                                                   
+4006 PRINT FILE(2),"2  ";SID$;"  ";STR$(RN);TAB(19);STR$(D(RN));TAB(22);DATER$;TAB(32);STR$(STIME);TAB(39);STR$(RTIME);         
+4007 PRINT FILE(2),TAB(46);STR$(ETIME);TAB(53);STR$(RTIME-STIME);TAB(60);STR$(ETIME-STIME)                                      
+4010 PRINT FILE(2),"3  ";SID$;"  ";STR$(FNM(0));TAB(22);STR$(FNM(1));TAB(28);STR$(FNM(2));TAB(34);STR$(FNM(1)+FNM(2));          
+4020 FOR I=1 TO 3                                                                                                               
+4022   PRINT FILE(2),TAB(34+I*6);STR$(SPORTS(HRS,I)*60+SPORTS(MINS,I));                                                         
+4025 NEXT I                                                                                                                     
+4030 PRINT FILE(2),TAB(58);STR$(FNM(3));TAB(64);STR$(FNM(4));TAB(70);STR$(FNM(5));TAB(76);STR$(FNM(6));TAB(82);STR$(FNM(7));    
+4040 PRINT FILE(2),TAB(88);STR$(FNM(4)+FNM(5)+FNM(6)+FNM(7));TAB(94);STR$(FNM(4)+FNM(5)+FNM(6)+FNM(7)+FNM(3));                  
+4044 ON ERR THEN LET S$=".     "                                                                                                
+4045 LET S$=STR$(FNM(3)/(FNM(1)+FNM(2)))                                                                                        
+4050 PRINT FILE(2),TAB(100);S$(1,6);                                                                                            
+4055 LET S$=STR$((FNM(3)+FNM(4)+FNM(5)+FNM(6)+FNM(7))/(FNM(1)+FNM(2)))                                                          
+4056 ON ERR THEN STOP                                                                                                           
+4060 PRINT FILE(2),TAB(108);S$(1,6);TAB(116);STR$(FNM(8));TAB(122);STR$(FNM(9))                                                 
+4100 REM REC TYPE 4                                                                                                             
+4110 PRINT FILE(2),"4  ";SID$;"  ";STR$(FNM(10));TAB(22);STR$(FNM(11));TAB(28);STR$(FNM(4)+FNM(11));                            
+4120 PRINT FILE(2),TAB(34);STR$(FNM(12));TAB(40);STR$(FNM(12)+60*(SPORTS(HRS,1)+SPORTS(HRS,2))+SPORTS(MINS,1)+SPORTS(MINS,2));  
+4130 PRINT FILE(2),TAB(46);STR$(FNM(13));TAB(52);STR$(FNM(5)+FNM(13));TAB(58);STR$(FNM(14));                                    
+4140 PRINT FILE(2),TAB(64);STR$(FNM(6)+FNM(14));TAB(70);STR$(FNM(15));TAB(76);STR$(FNM(16));                                    
+4150 PRINT FILE(2),TAB(82);STR$(FNM(15)+FNM(16));TAB(88);STR$(FNM(7)+FNM(15)+FNM(16));TAB(94);STR$(FNM(17));                    
+4160 PRINT FILE(2),TAB(100);STR$(FNM(18));TAB(106);STR$(FNM(19));TAB(112);STR$(TRAVEL(HRS,1)*60+TRAVEL(MINS,1));                
+4170 PRINT FILE(2),TAB(118);STR$(TRAVEL(HRS,2)*60+TRAVEL(MINS,2));TAB(124);STR$(FNM(20))                                        
+4200 REM TYPE 5 REC                                                                                                             
+4210 PRINT FILE(2),"5  ";SID$;                                                                                                  
+4220 FOR I=2 TO 21                                                                                                              
+4230   PRINT FILE(2),TAB(6+5*I);STR$(TTA(FRIENDS,I));                                                                           
+4240 NEXT I                                                                                                                     
+4250 PRINT FILE(2),TAB(116);STR$(BOOZE(FRIENDS));TAB(121);".   ."                                                               
+4300 REM TYPE 6 REC                                                                                                             
+4310 PRINT FILE(2),"6  ";SID$;                                                                                                  
+4320 FOR I=2 TO 21                                                                                                              
+4330   PRINT FILE(2),TAB(6+5*I);STR$(TTA(OTHERS,I));                                                                            
+4340 NEXT I                                                                                                                     
+4350 PRINT FILE(2),TAB(116);STR$(BOOZE(OTHERS))                                                                                 
+4400 REM TYPE 7 REC                                                                                                             
+4410 PRINT FILE(2),"7  ";SID$;                                                                                                  
+4420 FOR I=1 TO 21                                                                                                              
+4430   PRINT FILE(2),TAB(13+2*I);SPORTS$(I,I);                                                                                  
+4440 NEXT I                                                                                                                     
+4450 PRINT FILE(2),TAB(57);STR$(XBEN);TAB(65);ORG$;TAB(81);STR$(BOOZE(BEER));TAB(84);STR$(BOOZE(WINE));                         
+4460 PRINT FILE(2),TAB(88);STR$(BOOZE(MIXED));TAB(91);STR$(BOOZE(BEER)+BOOZE(WINE)+BOOZE(MIXED));                               
+4470 PRINT FILE(2),TAB(100);FAMILY$;TAB(110);FAMCON$                                                                            
+4500 REM TYPE 8 (OTHER) RECS (3 PER R)                                                                                          
+4510 PRINT FILE(2),"8  ";SID$;"  1  ";OTHER1$                                                                                   
+4520 PRINT FILE(2),"8  ";SID$;"  2  ";OTHER2$                                                                                   
+4530 PRINT FILE(2),"8  ";SID$;"  3  ";OTHER3$                                                                                   
+4900 CLOSE FILE(2)                                                                                                              
+4910 RETURN                                                                                                                     
+8999 END                                                                                                                        
+9000 | INCLUDES                                                                                                                 
+9001 INCLUDE "TA.EB"                                                                                                            
+9002 INCLUDE "DIARY.SPORTS"                                                                                                     
+9003 INCLUDE "DIARY.EXERCISE"                                                                                                   
+9004 INCLUDE "DIARY.ORG"                                                                                                        
+9005 INCLUDE "DIARY.TRAVEL"                                                                                                     
+9006 INCLUDE "DIARY.OTHER"                                                                                                      
+9007 INCLUDE "DIARY.FAMILY"                                                                                                     
+9008 INCLUDE "DIARY.BOOZE"                                                                                                      
+9009 INCLUDE "LIST3"                                                                                                            
+9010 INCLUDE "FKEY"                                                                                                             
+9011 INCLUDE "WORKING"                                                                                                          
+;                                                                                                                               
